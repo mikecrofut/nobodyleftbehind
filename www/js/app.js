@@ -1,0 +1,59 @@
+// Ionic Starter App
+
+// angular.module is a global place for creating, registering and retrieving Angular modules
+// 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
+// the 2nd parameter is an array of 'requires'
+angular.module('starter', ['ionic'])
+
+.run(function($ionicPlatform) {
+  $ionicPlatform.ready(function() {
+    // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
+    // for form inputs)
+    if(window.cordova && window.cordova.plugins.Keyboard) {
+      cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
+    }
+    if(window.StatusBar) {
+      StatusBar.styleDefault();
+    }
+  });
+})
+.controller('MapController', function($scope, $ionicLoading) {
+ 
+  //TODO get members from web service
+  var members = [
+    {
+      Name: 'Mike Crofut',
+      Position: new google.maps.LatLng(37.3000, -120.4833),
+      ImageUrl: 'https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xfa1/v/t1.0-1/c39.39.491.491/s200x200/35023_10200964531659336_972225816_n.jpg?oh=4b7f608bd6681e1a0803cbd2f2be852a&oe=560D40D6&__gda__=1440553278_e49b00b5af315aee6aa9de275cd7b4fd'   
+    },
+    {
+      Name: 'Emiluz Lopez',
+      Position: new google.maps.LatLng(37.3000, -120.4833),
+      ImageUrl: 'https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xaf1/v/t1.0-1/c33.0.200.200/p200x200/37609_414411069349_1695064_n.jpg?oh=dc8d76d2ba1d508ec8d20f8f5037d4c8&oe=5608D43B&__gda__=1439419187_29bf9a55b338d1e652dddc76f6e84993' 
+    }
+  ];
+
+    google.maps.event.addDomListener(window, 'load', function() {
+        var myLatlng = new google.maps.LatLng(37.3000, -120.4833);
+ 
+        var mapOptions = {
+            center: myLatlng,
+            zoom: 16,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+ 
+        var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+ 
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+            var myLocation = new google.maps.Marker({
+                position: new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
+                map: map,
+                title: "My Location"
+            });
+        });
+ 
+        $scope.map = map;
+    });
+ 
+});
