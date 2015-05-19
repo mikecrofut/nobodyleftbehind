@@ -19,19 +19,64 @@ angular.module('starter', ['ionic'])
 })
 .controller('MapController', function($scope, $ionicLoading) {
  
+  var map = null;
+ 
   //TODO get members from web service
   var members = [
     {
       Name: 'Mike Crofut',
-      Position: new google.maps.LatLng(37.3000, -120.4833),
+      Position: new google.maps.LatLng(45.52, -122.64),
       ImageUrl: 'https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xfa1/v/t1.0-1/c39.39.491.491/s200x200/35023_10200964531659336_972225816_n.jpg?oh=4b7f608bd6681e1a0803cbd2f2be852a&oe=560D40D6&__gda__=1440553278_e49b00b5af315aee6aa9de275cd7b4fd'   
     },
     {
       Name: 'Emiluz Lopez',
-      Position: new google.maps.LatLng(37.3000, -120.4833),
+      Position: new google.maps.LatLng(45.53, -122.63),
       ImageUrl: 'https://fbcdn-profile-a.akamaihd.net/hprofile-ak-xaf1/v/t1.0-1/c33.0.200.200/p200x200/37609_414411069349_1695064_n.jpg?oh=dc8d76d2ba1d508ec8d20f8f5037d4c8&oe=5608D43B&__gda__=1439419187_29bf9a55b338d1e652dddc76f6e84993' 
     }
   ];
+
+  var setMyLocation = function(pos) {
+    map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+
+    //my location
+    var myLocation = new google.maps.Marker({
+        position: new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
+        map: map,
+        title: "My Location"
+    });
+
+    //other member's location
+    for(var x = 0; x < members.length; ++x)
+    {
+      myLocation = new google.maps.Marker({
+        position: members[x].Position,
+        map: map,
+        icon: members[x].ImageUrl,
+        animation:google.maps.Animation.BOUNCE,
+        size: new google.maps.Size(100, 39),
+      });
+    }
+  };
+
+  var noGeoLocation = function(err) {
+     
+      
+    var content = 'Error: The Geolocation service failed. Code='+ err.code + '; Message=' + err.message;
+    
+    if(map != null)
+    {
+
+      var options = {
+        map: map,
+        position: new google.maps.LatLng(60, 105),
+        content: content
+      };
+
+      var infowindow = new google.maps.InfoWindow(options);
+      map.setCenter(options.position);
+
+    }
+  };
 
     google.maps.event.addDomListener(window, 'load', function() {
         var myLatlng = new google.maps.LatLng(37.3000, -120.4833);
@@ -42,16 +87,28 @@ angular.module('starter', ['ionic'])
             mapTypeId: google.maps.MapTypeId.ROADMAP
         };
  
-        var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+        map = new google.maps.Map(document.getElementById("map"), mapOptions);
  
-        navigator.geolocation.getCurrentPosition(function(pos) {
-            map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
-            var myLocation = new google.maps.Marker({
-                position: new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude),
-                map: map,
-                title: "My Location"
-            });
-        });
+         // Try HTML5 geolocation
+        if(navigator.geolocation) {
+
+          var options = {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          };
+
+          navigator.geolocation.getCurrentPosition(
+            setMyLocation,
+            noGeoLocation,
+            options
+            );
+        }
+        else
+        {
+          noGeoLocation(null);
+        }
+
  
         $scope.map = map;
     });
