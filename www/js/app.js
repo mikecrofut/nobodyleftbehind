@@ -5,6 +5,19 @@
 // the 2nd parameter is an array of 'requires'
 angular.module('starter', ['ionic'])
 
+.config(function($stateProvider, $urlRouterProvider) {
+
+  $stateProvider
+  .state('eventMap', {
+    url: '/',
+    templateUrl: 'templates/eventMap.html',
+    controller: 'EventMapController'
+  });
+ 
+  $urlRouterProvider.otherwise("/");
+
+})
+
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
     // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
@@ -17,9 +30,16 @@ angular.module('starter', ['ionic'])
     }
   });
 })
-.controller('MapController', function($scope, $ionicLoading) {
+
+
+.controller('EventMapController', function($scope, $ionicLoading) {
  
   var map = null;
+  //hard-coded web api url
+  var webApiUrl = 'http://192.168.1.138/nlb.web/api/';
+
+  //hard-coded event id
+  var eventId = '1';
  
   //TODO get members from web service
   var members = [
@@ -48,15 +68,54 @@ angular.module('starter', ['ionic'])
     //other member's location
     for(var x = 0; x < members.length; ++x)
     {
-      myLocation = new google.maps.Marker({
-        position: members[x].Position,
-        map: map,
-        icon: members[x].ImageUrl,
-        animation:google.maps.Animation.BOUNCE,
-        size: new google.maps.Size(100, 39),
-      });
+      addMemberToMap(members[x]);
     }
+
+    //round the corners
+    // createRoundedMarkers();
   };
+
+  var addMemberToMap = function(member)
+  {
+
+    // Origins, anchor positions and coordinates of the marker
+    // increase in the X direction to the right and in
+    // the Y direction down.
+    var image = {
+      url: member.ImageUrl,
+      // This marker is 20 pixels wide by 32 pixels tall.
+      //size: new google.maps.Size(20, 32),
+      scaledSize: new google.maps.Size(40, 40), // scaled size
+      // The origin for this image is 0,0.
+      origin: new google.maps.Point(0,0),
+      // The anchor for this image is the base of the flagpole at 0,32.
+      anchor: new google.maps.Point(0, 32)
+    };
+    // Shapes define the clickable region of the icon.
+    // The type defines an HTML &lt;area&gt; element 'poly' which
+    // traces out a polygon as a series of X,Y points. The final
+    // coordinate closes the poly by connecting to the first
+    // coordinate.
+    var shape = {
+        coords: [1, 1, 1, 20, 18, 20, 18 , 1],
+        type: 'poly'
+    };
+
+    var myLocation = new google.maps.Marker({
+    //var myLocation = new MarkerWithLabel({
+      position: member.Position,
+      map: map,
+      icon: image,
+      shape: shape,
+      title: member.Name,
+      //labelClass: "memberMarker"
+      //zIndex: 1
+      //animation:google.maps.Animation.BOUNCE
+      //size: new google.maps.Size(100, 39),
+    });
+
+  };
+
 
   var noGeoLocation = function(err) {
      
@@ -78,39 +137,51 @@ angular.module('starter', ['ionic'])
     }
   };
 
-    google.maps.event.addDomListener(window, 'load', function() {
-        var myLatlng = new google.maps.LatLng(37.3000, -120.4833);
- 
-        var mapOptions = {
-            center: myLatlng,
-            zoom: 16,
-            mapTypeId: google.maps.MapTypeId.ROADMAP
+  var getEvent = function() {
+    $.getJSON(webApiUrl + 'events/' + eventId)
+        .done(function (data) {
+          $scope.Event = data;
+        })
+        .fail(function (jqXHR, textStatus, err) {
+          alert('Error: ' + err);
+        });
+  };
+
+  google.maps.event.addDomListener(window, 'load', function() {
+      var myLatlng = new google.maps.LatLng(37.3000, -120.4833);
+
+      var mapOptions = {
+          center: myLatlng,
+          zoom: 16,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+      };
+
+      map = new google.maps.Map(document.getElementById("map"), mapOptions);
+
+       // Try HTML5 geolocation
+      if(navigator.geolocation) {
+
+        var options = {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
         };
- 
-        map = new google.maps.Map(document.getElementById("map"), mapOptions);
- 
-         // Try HTML5 geolocation
-        if(navigator.geolocation) {
 
-          var options = {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0
-          };
+        navigator.geolocation.getCurrentPosition(
+          setMyLocation,
+          noGeoLocation,
+          options
+          );
+      }
+      else
+      {
+        noGeoLocation(null);
+      }
 
-          navigator.geolocation.getCurrentPosition(
-            setMyLocation,
-            noGeoLocation,
-            options
-            );
-        }
-        else
-        {
-          noGeoLocation(null);
-        }
 
- 
-        $scope.map = map;
-    });
+      $scope.map = map;
+  });
+
+  getEvent();
  
 });
